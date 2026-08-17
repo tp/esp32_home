@@ -41,6 +41,12 @@ pub struct FirmwareNetwork {
     runner: Runner<'static, Interface<'static>>,
     lpec_socket: TcpSocket<'static>,
     artwork_socket: TcpSocket<'static>,
+    // One-way latch: set the first time DHCP reports a config, never cleared.
+    // A Wi-Fi reconnect can land on a different AP with a different lease, but
+    // `wait_config_up_async` short-circuits on this flag, so callers dial out
+    // before the new address exists and eat a round of connect timeouts.
+    // Clearing this and closing both sockets on reconnect is the missing half
+    // of `wifi_reconnect_task`.
     config_ready: bool,
     config_poll_started_at: Option<Instant>,
 }
